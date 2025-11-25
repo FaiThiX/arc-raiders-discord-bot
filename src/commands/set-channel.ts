@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, ChannelType, PermissionFlagsBits, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 import { setServerConfig } from '../utils/serverConfig';
+import { appendServerInfo } from '../utils/googleSheets';
+import { postOrUpdateInChannel } from '../utils/messageManager';
 import { Command } from '../types';
 
 const SetChannelCommand: Command = {
@@ -23,7 +25,18 @@ const SetChannelCommand: Command = {
 
     const channel = interaction.options.getChannel('channel', true) as TextChannel;
 
+
     setServerConfig(interaction.guildId, channel.id);
+    // Save server info to Google Sheets
+    await appendServerInfo(
+      interaction.guildId,
+      channel.id,
+      interaction.guild?.name || 'Unknown'
+    );
+
+
+    // Trigger map status update only in the newly set channel
+    await postOrUpdateInChannel(interaction.client, channel.id);
 
     await interaction.reply({
       content: `Map rotation updates will now be sent to #${channel.name}.`,

@@ -1,6 +1,5 @@
 import { Client, TextChannel, EmbedBuilder, Message } from 'discord.js';
-import * as fs from 'fs';
-import * as path from 'path';
+import { getSheetData, updateSheetData } from './googleSheets';
 import { MessageDataStore } from '../types';
 import { logger } from './logger';
 import { 
@@ -11,35 +10,40 @@ import {
   CONDITION_COLORS
 } from '../config/mapRotation';
 
-const DATA_FILE = path.join(__dirname, '../data/messageIds.json');
+
+const SHEET_RANGE = 'MessageIds!A2:C'; // Assumes a sheet named MessageIds with columns: channelId, messageId, lastUpdated
+
 
 /**
- * Read message data from file
+ * Read message data from Google Sheets
  */
-export function readMessageData(): MessageDataStore {
+export async function readMessageData(): Promise<MessageDataStore> {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = fs.readFileSync(DATA_FILE, 'utf8');
-      return JSON.parse(data);
+    const rows = await getSheetData(SHEET_RANGE);
+    if (!rows || rows.length === 0) return {};
+    const store: MessageDataStore = {};
+    for (const row of rows) {
+      const [channelId, messageId, lastUpdated] = row;
+      if (channelId && messageId) {
+        store[channelId] = { channelId, messageId, lastUpdated };
+      }
     }
+    return store;
   } catch (error) {
-    logger.error({ err: error }, 'Error reading message data');
+    logger.error({ err: error }, 'Error reading message data from Google Sheets');
+    return {};
   }
-  return {};
 }
 
 /**
- * Save message data to file
+ * Save message data to Google Sheets
  */
-export function saveMessageData(data: MessageDataStore): void {
+export async function saveMessageData(data: MessageDataStore): Promise<void> {
   try {
-    const dir = path.dirname(DATA_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    const values = Object.values(data).map(d => [d.channelId, d.messageId, d.lastUpdated]);
+    await updateSheetData(SHEET_RANGE, values);
   } catch (error) {
-    logger.error({ err: error }, 'Error saving message data');
+    logger.error({ err: error }, 'Error saving message data to Google Sheets');
   }
 }
 
@@ -145,7 +149,7 @@ import { getServerConfigs } from './serverConfig';
  * @param {Client} client The Discord client.
  * @param {string} channelId The ID of the channel to post in.
  */
-async function postOrUpdateInChannel(client: Client, channelId: string): Promise<void> {
+export async function postOrUpdateInChannel(client: Client, channelId: string): Promise<void> {
   try {
     const channel = await client.channels.fetch(channelId) as TextChannel;
 
@@ -155,7 +159,7 @@ async function postOrUpdateInChannel(client: Client, channelId: string): Promise
     }
 
     const embed = createMapRotationEmbed();
-    const messageData = readMessageData();
+    const messageData = await readMessageData();
     const storedData = messageData[channelId];
 
     let message: Message;
@@ -182,7 +186,7 @@ async function postOrUpdateInChannel(client: Client, channelId: string): Promise
       messageId: message.id,
       lastUpdated: new Date().toISOString(),
     };
-    saveMessageData(messageData);
+    await saveMessageData(messageData);
   } catch (error) {
     logger.error({ err: error }, `Error processing channel ${channelId}`);
   }
