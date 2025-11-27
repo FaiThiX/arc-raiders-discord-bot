@@ -90,6 +90,11 @@ export function createMapRotationEmbed(): EmbedBuilder {
         inline: true
       },
       {
+        name: '🏔️ Stella Montis',
+        value: `Minor: ${formatCondition(current.stellaMontisMinor)}\nMajor: ${formatCondition(current.stellaMontisMajor)}`,
+        inline: true
+      },
+      {
         name: '\u200B',
         value: '\u200B',
         inline: true
@@ -123,6 +128,11 @@ export function createMapRotationEmbed(): EmbedBuilder {
       {
         name: '🌉 Blue Gate',
         value: `Minor: ${formatCondition(next.blueGateMinor)}\nMajor: ${formatCondition(next.blueGateMajor)}`,
+        inline: true
+      },
+      {
+        name: '🏔️ Stella Montis',
+        value: `Minor: ${formatCondition(next.stellaMontisMinor)}\nMajor: ${formatCondition(next.stellaMontisMajor)}`,
         inline: true
       },
       {

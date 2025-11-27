@@ -21,6 +21,8 @@ export interface MapRotation {
   spaceportMajor: string;
   blueGateMinor: string;
   blueGateMajor: string;
+  stellaMontisMinor: string;
+  stellaMontisMajor: string;
 }
 
 export interface MessageData {
