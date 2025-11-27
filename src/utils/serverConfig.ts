@@ -1,4 +1,3 @@
-
 import { getSheetData } from './googleSheets';
 import { logger } from './logger';
 import { ServerConfig } from '../types';
@@ -23,4 +22,4 @@ export async function getServerConfigs(): Promise<ServerConfig> {
     logger.error({ err: error }, 'Error reading server configurations from Google Sheets');
     return {};
   }
-  }
+}

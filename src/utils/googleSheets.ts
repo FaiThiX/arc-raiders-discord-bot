@@ -54,3 +54,12 @@ export async function appendServerInfo(guildId: string, channelId: string, serve
   const values = [[guildId, channelId, serverName]];
   await appendSheetData(range, values);
 }
+
+// Remove server info from Google Sheets by guildId
+export async function removeServerFromSheet(guildId: string) {
+  const range = 'ServerInfo!A2:C';
+  const rows = await getSheetData(range);
+  if (!rows || rows.length === 0) return;
+  const filtered = rows.filter((row) => row[0] !== guildId);
+  await updateSheetData(range, filtered);
+}
